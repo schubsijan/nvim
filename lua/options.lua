@@ -7,21 +7,13 @@
 vim.opt.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
--- vim.opt.relativenumber = true
+vim.opt.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
 
 -- Don't show the mode, since it's already in the status line
 vim.opt.showmode = false
-
--- Sync clipboard between OS and Neovim.
---  Schedule the setting after `UiEnter` because it can increase startup-time.
---  Remove this option if you want your OS clipboard to remain independent.
---  See `:help 'clipboard'`
-vim.schedule(function()
-  vim.opt.clipboard = 'unnamedplus'
-end)
 
 -- Enable break indent
 vim.opt.breakindent = true
@@ -33,11 +25,28 @@ vim.opt.undofile = true
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 
+-- nicht alle Treffer von Suche hervorheben, sondern nur aktuelles
+vim.opt.hlsearch = false
+-- beim Suche eintippen schon zu Ergebnissen springen
+vim.opt.incsearch = true
+
+-- tabgröße nur auf 2 Leerzeichen setzen
+vim.opt.tabstop = 2
+vim.opt.shiftwidth = 2
+-- beim Drücken von Tab stattdessen die entsprechende Anzahl an Leerzeichen einfügen
+vim.opt.expandtab = true
+-- beim Dücken von Enter auf selbe Tabebene kommen, wie die Zeile aus der ich komme
+vim.opt.autoindent = true
+
 -- Keep signcolumn on by default
 vim.opt.signcolumn = 'yes'
 
 -- Decrease update time
 vim.opt.updatetime = 250
+
+-- alle Dateien im aktuellen Buffer neuladen, wenn sie außerhalb von NVIM geändert werden (dadurch bleiben sie in Sync)
+vim.opt.autoread = true
+vim.bo.autoread = true
 
 -- Decrease mapped sequence wait time
 -- Displays which-key popup sooner
@@ -46,12 +55,6 @@ vim.opt.timeoutlen = 300
 -- Configure how new splits should be opened
 vim.opt.splitright = true
 vim.opt.splitbelow = true
-
--- Sets how neovim will display certain whitespace characters in the editor.
---  See `:help 'list'`
---  and `:help 'listchars'`
-vim.opt.list = true
-vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
 
 -- Preview substitutions live, as you type!
 vim.opt.inccommand = 'split'
