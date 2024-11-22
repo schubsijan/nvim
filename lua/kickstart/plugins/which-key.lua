@@ -18,6 +18,9 @@ return {
     'folke/which-key.nvim',
     event = 'VimEnter', -- Sets the loading event to 'VimEnter'
     opts = {
+      triggers = {
+        { '<leader>', mode = { 'n', 'v' } },
+      },
       icons = {
         -- set icon mappings to true if you have a Nerd Font
         mappings = vim.g.have_nerd_font,
@@ -55,6 +58,7 @@ return {
         },
       },
 
+      -- TODO evtl. an meine persönlichen key chains anpasse oder löschen
       -- Document existing key chains
       spec = {
         { '<leader>c', group = '[C]ode', mode = { 'n', 'x' } },
