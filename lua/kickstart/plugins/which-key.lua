@@ -20,7 +20,6 @@ return {
     opts = {
       triggers = {
         { '<leader>', mode = { 'n', 'v' } },
-        { 'g', mode = { 'n', 'v' } },
       },
       icons = {
         -- set icon mappings to true if you have a Nerd Font

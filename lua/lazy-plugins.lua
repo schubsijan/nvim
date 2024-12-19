@@ -32,6 +32,8 @@ require('lazy').setup({
 
   require 'kickstart/plugins/lsp',
 
+  require 'kickstart/plugins/conform',
+
   require 'kickstart/plugins/todo-comments',
 
   require 'kickstart/plugins/mini',

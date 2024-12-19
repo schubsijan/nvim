@@ -1,10 +1,10 @@
+-- nice documentation for setting up a LSP in nvim: https://lsp-zero.netlify.app/docs/getting-started.html
 return {
   {
     'williamboman/mason.nvim',
     lazy = false,
     opts = {},
   },
-
   -- Autocompletion
   {
     'hrsh8th/nvim-cmp',
@@ -35,6 +35,27 @@ return {
           -- Navigate between completion items
           ['<C-p>'] = cmp.mapping.select_prev_item({ behavior = 'select' }),
           ['<C-n>'] = cmp.mapping.select_next_item({ behavior = 'select' }),
+          -- mit <C-e> abbrechen können
+          ['<C-e>'] = cmp.mapping.abort(),
+
+          -- Jump to the next snippet placeholder
+          ['<C-l>'] = cmp.mapping(function(fallback)
+            local luasnip = require('luasnip')
+            if luasnip.locally_jumpable(1) then
+              luasnip.jump(1)
+            else
+              fallback()
+            end
+          end, { 'i', 's' }),
+          -- Jump to the previous snippet placeholder
+          ['<C-h>'] = cmp.mapping(function(fallback)
+            local luasnip = require('luasnip')
+            if luasnip.locally_jumpable(-1) then
+              luasnip.jump(-1)
+            else
+              fallback()
+            end
+          end, { 'i', 's' }),
 
           -- `Enter` key to confirm completion
 
@@ -56,8 +77,8 @@ return {
             mode = "symbol", -- nur die Symbole anzeigen, nicht auch den Text
             ellipsis_char = "...",
             maxwidth = {
-              menu = 51, -- leading text (labelDetails)
-              abbr = 51, -- actual suggestion item
+              menu = 51,              -- leading text (labelDetails)
+              abbr = 51,              -- actual suggestion item
             },
             show_labelDetails = true, -- show labelDetails in menu. Disabled by default
           }),
@@ -86,6 +107,9 @@ return {
     end,
     config = function()
       local lsp_defaults = require('lspconfig').util.default_config
+
+      -- add templ as filetype, so that nvim can attach the lsps
+      vim.filetype.add({ extension = { templ = "templ" } })
 
       -- Add cmp_nvim_lsp capabilities settings to lspconfig
       -- This should be executed before you configure any language server
@@ -143,6 +167,19 @@ return {
           gopls = function()
             require('lspconfig').gopls.setup({
               filetypes = { "go", "templ" },
+              gopls = {
+                codelenses = {
+                  generate = true, -- show the `go generate` lens.
+                  gc_details = true, -- show a code lens toggling the display of gc's choices.
+                  test = true,
+                  upgrade_dependency = true,
+                  tidy = true,
+                },
+                completeUnimported = true,
+                analyses ={
+                  unusedparams = true
+                }
+              },
             })
           end,
           templ = function()
