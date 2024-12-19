@@ -33,6 +33,7 @@ return {
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        go = { 'golines' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -40,6 +41,22 @@ return {
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
       },
     },
+    config = function()
+      --[[
+      -- Formatierung für .templ files
+      vim.api.nvim_create_autocmd({ 'BufWritePost' }, { -- IDK the docs said to do the format before saving the file, but it only makes the formatter freak out.
+        pattern = { '*.templ' },
+        callback = function()
+          local file_name = vim.api.nvim_buf_get_name(0) -- Get file name of file in current buffer
+          vim.cmd(':silent !templ fmt ' .. file_name)
+
+          local bufnr = vim.api.nvim_get_current_buf()
+          if vim.api.nvim_get_current_buf() == bufnr then
+            vim.cmd 'e!'
+          end
+        end,
+      })]]
+    end,
   },
 }
 -- vim: ts=2 sts=2 sw=2 et

@@ -14,6 +14,151 @@ return { -- LSP Configuration & Plugins
     { 'folke/neodev.nvim', opts = {} },
   },
   config = function()
+    local nvim_lsp = require 'lspconfig'
+    -- Format on save.
+    -- vim.cmd [[autocmd BufWritePre * lua vim.lsp.buf.format()]]
+
+    -- map('[d', vim.diagnostic.goto_prev, 'go to previous diagnostic')
+    -- map(']d', vim.diagnostic.goto_next, 'go to next diagnostic')nvim_buf_set_keymap
+    -- vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist, opts)
+
+    -- Use an on_attach function to only map the following keys
+    -- after the language server attaches to the current buffer
+    local on_attach = function(client, bufnr)
+      local opts = function(desc)
+        return { noremap = true, silent = true, desc = 'LSP: ' .. desc, buffer = bufnr }
+      end
+      local map = function(keys, func, desc)
+        vim.keymap.set('n', keys, func, opts(desc))
+      end
+      map('<leader>d', vim.diagnostic.open_float, 'show [d]iagnostics for line')
+
+      local function buf_set_option(...)
+        vim.api.nvim_buf_set_option(bufnr, ...)
+      end
+
+      --Enable completion triggered by <c-x><c-o>
+      buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
+
+      -- See `:help vim.lsp.*` for documentation on any of the below functions
+      map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+      map('gd', vim.lsp.buf.definition, '[G]oto [D]efinition')
+      map('K', vim.lsp.buf.hover, 'Hover Documentation')
+      -- Jump to the implementation of the word under your cursor.
+      --  Useful when your language has ways of declaring types without an actual implementation.
+      map('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
+      -- buf_set_keymap('n', '<C-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
+      -- buf_set_keymap('n', '<space>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
+      -- buf_set_keymap('n', '<space>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
+      -- buf_set_keymap('n', '<space>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
+      map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
+      -- Rename the variable under your cursor.
+      --  Most Language Servers support renaming across files, etc.
+      map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
+      -- Execute a code action, usually your cursor needs to be on top of an error
+      -- or a suggestion from your LSP for this to activate.
+      map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
+      -- Find references for the word under your cursor.
+      map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+    end
+
+    -- Add templ configuration.
+    vim.filetype.add { extension = { templ = 'templ' } }
+    local configs = require 'lspconfig.configs'
+    configs.templ = {
+      default_config = {
+        --cmd = { "templ", "lsp", "-http=localhost:7474", "-log=/Users/adrian/templ.log", "-goplsLog=/Users/adrian/gopls.log" },
+        cmd = { 'templ', 'lsp' },
+        filetypes = { 'templ' },
+        root_dir = nvim_lsp.util.root_pattern('go.mod', '.git'),
+        settings = {},
+      },
+    }
+
+    -- add capabilities of Autocompletion
+    local capabilities = vim.lsp.protocol.make_client_capabilities()
+    capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
+
+    local server_settings = {
+      lua_ls = {
+        settings = {
+          Lua = {
+            completion = {
+              callSnippet = 'Replace',
+            },
+          },
+        },
+      },
+      gopls = {
+        filetypes = { 'go', 'templ' },
+      },
+      eslint = {
+        enable = true,
+        format = { enable = true }, -- this will enable formatting
+        packageManager = 'npm',
+        autoFixOnSave = true,
+        codeActionOnSave = {
+          mode = 'all',
+          rules = { '!debugger', '!no-only-tests/*' },
+        },
+        lintTask = {
+          enable = true,
+        },
+      },
+      html = {
+        filetypes = { 'html', 'templ' },
+      },
+      templ = {},
+      tailwindcss = {
+        filetypes = { 'templ', 'html' },
+        settings = {
+          tailwindCSS = {
+            includeLanguages = {
+              templ = 'html',
+            },
+          },
+        },
+      },
+    }
+
+    -- Use a loop to conveniently call 'setup' on multiple servers and
+    -- map buffer local keybindings when the language server attaches
+    -- eslint comes from:
+    -- npm i -g vscode-langservers-extracted
+    local servers = { 'gopls', 'templ', 'eslint', 'lua_ls', 'html' }
+    for _, lsp in ipairs(servers) do
+      local lsp_opts = {
+        on_attach = on_attach,
+        capabilities = capabilities,
+        flags = {
+          debounce_text_changes = 150,
+        },
+      }
+      if server_settings[lsp] then
+        lsp_opts.settings = server_settings[lsp]
+      end
+      nvim_lsp[lsp].setup(lsp_opts)
+    end
+  end,
+}
+
+--[[
+return { -- LSP Configuration & Plugins
+  'neovim/nvim-lspconfig',
+  dependencies = {
+    -- Automatically install LSPs and related tools to stdpath for Neovim
+    { 'williamboman/mason.nvim', config = true }, -- NOTE: Must be loaded before dependants
+    'williamboman/mason-lspconfig.nvim',
+    'WhoIsSethDaniel/mason-tool-installer.nvim',
+
+    -- Useful status updates for LSP (unten rechts)
+    { 'j-hui/fidget.nvim', opts = {} },
+
+    -- `neodev` configures Lua LSP for your Neovim config, runtime and plugins
+    -- used for completion, annotations and signatures of Neovim apis
+    { 'folke/neodev.nvim', opts = {} },
+  },
+  config = function()
     -- LSP provides Neovim with features like:
     --  - Go to definition
     --  - Find references
@@ -246,3 +391,5 @@ return { -- LSP Configuration & Plugins
     }
   end,
 }
+
+]]
