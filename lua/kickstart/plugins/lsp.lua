@@ -7,17 +7,15 @@ return {
   },
   -- Autocompletion
   {
-    'hrsh8th/nvim-cmp',
+    'hrsh7th/nvim-cmp',
     dependencies = {
-      'saadparwaiz2/cmp_luasnip',
-
       -- Adds other completion capabilities.
       --  nvim-cmp does not ship with all sources by default. They are split
       --  into multiple repos for maintenance purposes.
-      'hrsh8th/cmp-path',
+      'hrsh7th/cmp-path',
       "onsails/lspkind.nvim", -- vs-code like pictograms
-      "L4MON4D3/LuaSnip",
-      "saadparwaiz2/cmp_luasnip",
+      "L3MON4D3/LuaSnip",
+      "saadparwaiz1/cmp_luasnip",
       "rafamadriz/friendly-snippets"
     },
     event = 'InsertEnter',
@@ -93,7 +91,7 @@ return {
     cmd = { 'LspInfo', 'LspInstall', 'LspStart' },
     event = { 'BufReadPre', 'BufNewFile' },
     dependencies = {
-      { 'hrsh8th/cmp-nvim-lsp' },
+      { 'hrsh7th/cmp-nvim-lsp' },
       { 'williamboman/mason.nvim' },
       { 'williamboman/mason-lspconfig.nvim' },
       -- `neodev` configures Lua LSP for your Neovim config, runtime and plugins
