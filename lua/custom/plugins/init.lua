@@ -3,5 +3,6 @@
 --
 -- See the kickstart.nvim README for more information
 return {
-  { 'JoosepAlviste/palenightfall.nvim', opts = {} },
+  -- { 'JoosepAlviste/palenightfall.nvim', opts = {} }, -- alter theme ohne transparent & not nord
+  { 'rmehri01/onenord.nvim', opts = {} },
 }
