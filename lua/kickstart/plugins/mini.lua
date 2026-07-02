@@ -31,12 +31,64 @@ return {
         },
       }
 
-      -- You can configure sections in the statusline by overriding their
-      -- default behavior. For example, here we set the section for
-      -- cursor location to LINE:COLUMN
+      -- 1. MODE: "N", "I", "V" mit korrekter Farbe
+      ---@diagnostic disable-next-line: duplicate-set-field
+      statusline.section_mode = function(args)
+        local mode_map = {
+          ['n'] = 'N',
+          ['i'] = 'I',
+          ['v'] = 'V',
+          ['V'] = 'V-L',
+          ['\22'] = 'V-B',
+          ['c'] = 'C',
+          ['R'] = 'R',
+          ['t'] = 'T',
+        }
+        local mode = vim.fn.mode()
+        local text = mode_map[mode] or mode
+
+        -- Farbe je nach Modus wählen
+        local mode_hl = 'MiniStatuslineModeNormal'
+        if mode == 'i' then
+          mode_hl = 'MiniStatuslineModeInsert'
+        elseif mode:find('[vV\22]') then
+          mode_hl = 'MiniStatuslineModeVisual'
+        elseif mode == 'R' then
+          mode_hl = 'MiniStatuslineModeReplace'
+        elseif mode == 'c' then
+          mode_hl = 'MiniStatuslineModeCommand'
+        end
+
+        return text, mode_hl
+      end
+
+      -- 2. FILEINFO: Icon + Dateityp (mit Fix für den Fehler)
+      ---@diagnostic disable-next-line: duplicate-set-field
+      statusline.section_fileinfo = function(args)
+        local filetype = vim.bo.filetype
+        if filetype == '' then return '' end
+
+        local icon = ''
+        -- Versuche das Icon über nvim-web-devicons zu laden (Standard in Kickstart)
+        local has_devicons, devicons = pcall(require, 'nvim-web-devicons')
+        if has_devicons then
+          icon = devicons.get_icon(vim.fn.expand('%:t'), filetype, { default = true })
+        end
+
+        -- Falls kein Icon gefunden wurde, leer lassen
+        icon = icon or ''
+        -- Abstand nur hinzufügen, wenn ein Icon da ist
+        if icon ~= '' then icon = icon .. ' ' end
+
+        -- Gibt Text UND die Highlight-Gruppe 'MiniStatuslineFileinfo' zurück
+        return icon .. filetype, 'MiniStatuslineFileinfo'
+      end
+
+      -- 3. LOCATION: Zeile:Spalte mit Hintergrund
       ---@diagnostic disable-next-line: duplicate-set-field
       statusline.section_location = function()
-        return '%2l:%-2v'
+        -- Gibt Text UND die Highlight-Gruppe 'MiniStatuslineDevinfo' zurück
+        return '%2l:%-2v', 'MiniStatuslineDevinfo'
       end
 
       -- ... and there is more!

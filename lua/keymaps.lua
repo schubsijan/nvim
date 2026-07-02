@@ -60,7 +60,8 @@ vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv")
 vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv")
 
 -- wenn man in Normal-Mode über einem Wort ist und <leader>rw drückt, dann kommt man in ein einfaches Menu, dass alle Wörter dieser Art im Filer ersetzt
-vim.keymap.set('n', '<leader>rw', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], { desc = 'replace all instances of word under cursor' })
+vim.keymap.set('n', '<leader>rw', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]],
+  { desc = 'replace all instances of word under cursor' })
 
 -- <leader>y & <leader>yy um ins System-Clipboard zu kopieren sonst nur innerhalb von Vim
 vim.keymap.set({ 'n', 'v' }, '<leader>y', [["+y]], { desc = 'In System clipboard kopieren' })
@@ -70,5 +71,3 @@ vim.keymap.set({ 'n', 'v' }, '<leader>m', [["_d]], { desc = 'Löschung nicht in 
 
 -- wenn <lead>p dann zwar pasten aber das gehighlighte Wort wird nicht in den buffer gepackt
 vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Pasten, aber gehighlightetes Wort nicht in buffer' })
-
--- vim: ts=2 sts=2 sw=2 et

@@ -141,7 +141,15 @@ return {
 
       require('mason-lspconfig').setup({
         automatic_installation = true,
-        ensure_installed = {},
+        ensure_installed = {
+          'ts_ls',
+          'lua_ls',
+          'gopls',
+          'html',
+          'tailwindcss',
+          'eslint',
+          'templ'
+        },
         handlers = {
           -- this first function is the "default handler"
           -- it applies to every language server without a "custom handler"
@@ -167,14 +175,14 @@ return {
               filetypes = { "go", "templ" },
               gopls = {
                 codelenses = {
-                  generate = true, -- show the `go generate` lens.
+                  generate = true,   -- show the `go generate` lens.
                   gc_details = true, -- show a code lens toggling the display of gc's choices.
                   test = true,
                   upgrade_dependency = true,
                   tidy = true,
                 },
                 completeUnimported = true,
-                analyses ={
+                analyses = {
                   unusedparams = true
                 }
               },
@@ -223,7 +231,10 @@ return {
                 enable = true,
               },
             })
-          end
+          end,
+          tsserver = function()
+            require('lspconfig').tsserver.setup({})
+          end,
         }
       })
     end

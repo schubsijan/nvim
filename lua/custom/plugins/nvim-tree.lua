@@ -7,29 +7,21 @@ return {
     vim.g.loaded_netrwPlugin = 1
 
     local api = require 'nvim-tree.api'
-    vim.keymap.set('n', '<leader>e', api.tree.toggle, { desc = 'toggle Filetree' })
-
-    local function my_on_attach(bufnr)
-      local function opts(desc)
-        return {
-          desc = 'nvim-tree: ' .. desc,
-          buffer = bufnr,
-          noremap = true,
-          silent = true,
-          nowait = true,
-        }
-      end
-
-      -- default mappings
-      api.config.mappings.default_on_attach(bufnr)
-
-      -- custom mappings
-      vim.keymap.set('n', '<leader>e', api.tree.toggle, opts 'Toggle')
-      vim.keymap.set('n', '?', api.tree.toggle_help, opts 'Help')
-    end
 
     require('nvim-tree').setup {
-      on_attach = my_on_attach,
+      on_attach = function(bufnr)
+        local function opts(desc)
+          return {
+            desc = 'nvim-tree: ' .. desc,
+            buffer = bufnr,
+            noremap = true,
+            silent = true,
+            nowait = true,
+          }
+        end
+        api.config.mappings.default_on_attach(bufnr)
+        vim.keymap.set('n', '?', api.tree.toggle_help, opts 'Help')
+      end,
       filters = {
         custom = { '^.git$' },
       },
@@ -55,5 +47,9 @@ return {
         },
       },
     }
+
+    vim.keymap.set('n', '<leader>e', function()
+      api.tree.toggle()
+    end, { desc = 'toggle Filetree' })
   end,
 }
