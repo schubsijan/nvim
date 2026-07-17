@@ -13,6 +13,7 @@ return {
         path = '/home/schubsi/Dokumente/Studium/Masterarbeit/masterarbeit-obsidian',
       },
     },
+    ui = { enable = false }, -- da ich das render-markdown mache
     frontmatter = { enabled = false },
     legacy_commands = false,
     footer = {
@@ -56,7 +57,7 @@ return {
             vim.wo[win].concealcursor = 'n'
             vim.wo[win].number = false
             vim.wo[win].relativenumber = false
-            vim.wo[win].winbar = '%#WinBarTitle# ' .. vim.fn.fnamemodify(filepath, ':t:r') .. ' %*'
+            vim.wo[win].winbar = '%#WinBarTitle# ' .. vim.fn.fnamemodify(filepath, ':t:r') .. ' %< %*'
           end
         end
       end,

@@ -46,13 +46,63 @@ return {
 
 
     link = {
-      wiki = { icon = '' },
-      hyperlink = '',
+      footnote = {
+        icon = '',
+      },
+      image = '',
       email = '',
-      footnote = { icon = '' },
+      hyperlink = '',
+      wiki = {
+        icon = '',
+        scope_highlight = 'my-link',
+      },
+      custom = {
+        web = { icon = '', pattern = '^http' },
+        apple = { icon = '', pattern = 'apple%.com', kind = 'url' },
+        discord = { icon = '', pattern = 'discord%.com', kind = 'url' },
+        github = { icon = '', pattern = 'github%.com', kind = 'url' },
+        gitlab = { icon = '', pattern = 'gitlab%.com', kind = 'url' },
+        google = { icon = '', pattern = 'google%.com', kind = 'url' },
+        hackernews = { icon = '', pattern = 'ycombinator%.com', kind = 'url' },
+        linkedin = { icon = '', pattern = 'linkedin%.com', kind = 'url' },
+        microsoft = { icon = '', pattern = 'microsoft%.com', kind = 'url' },
+        neovim = { icon = '', pattern = 'neovim%.io', kind = 'url' },
+        reddit = { icon = '', pattern = 'reddit%.com', kind = 'url' },
+        slack = { icon = '', pattern = 'slack%.com', kind = 'url' },
+        stackoverflow = { icon = '', pattern = 'stackoverflow%.com', kind = 'url' },
+        steam = { icon = '', pattern = 'steampowered%.com', kind = 'url' },
+        twitter = { icon = '', pattern = 'twitter%.com', kind = 'url' },
+        wikipedia = { icon = '', pattern = 'wikipedia%.org', kind = 'url' },
+        x = { icon = '', pattern = 'x%.com', kind = 'url' },
+        youtube = { icon = '', pattern = 'youtube[^.]*%.com', kind = 'url' },
+        youtube_short = { icon = '', pattern = 'youtu%.be', kind = 'url' },
+      },
     },
-    quote = { repeat_linebreak = true },
+
     pipe_table = { preset = 'round' },
+    quote = { repeat_linebreak = true },
+    win_options = {
+      wrap = {
+        default = vim.o.wrap,
+        rendered = true,
+      },
+      linebreak = {
+        default = vim.o.linebreak,
+        rendered = true,
+      },
+      showbreak = {
+        default = '',
+        rendered = '  ',
+      },
+      breakindent = {
+        default = false,
+        rendered = true,
+      },
+      breakindentopt = {
+        default = '',
+        rendered = '',
+      },
+    },
   },
   config = function(_, opts)
     local render = require 'render-markdown'
@@ -68,11 +118,8 @@ return {
       vim.api.nvim_set_hl(0, 'RenderMarkdown' .. name .. 'Bg', { fg = fg, bg = '#3b4252' })
     end
     vim.api.nvim_set_hl(0, '@markup.italic', { fg = '#e5c688', italic = true })
-    vim.api.nvim_set_hl(0, '@markup.link', { fg = '#81a1c1', underline = false })
-    vim.api.nvim_set_hl(0, '@markup.link.url', { fg = '#81a1c1', underline = false })
-    vim.api.nvim_set_hl(0, 'RenderMarkdownLink', { fg = '#81a1c1', underline = false })
-    vim.api.nvim_set_hl(0, 'RenderMarkdownWikiLink', { fg = '#81a1c1', underline = false })
     vim.api.nvim_set_hl(0, 'RenderMarkdownBullet', { fg = '#888e99' })
+    -- Blockquotes
     vim.api.nvim_set_hl(0, 'RenderMarkdownQuote1', { fg = '#7e9dbc' })
     vim.api.nvim_set_hl(0, 'RenderMarkdownQuote2', { fg = '#7e9dbc' })
     vim.api.nvim_set_hl(0, 'RenderMarkdownQuote3', { fg = '#7e9dbc' })
@@ -80,6 +127,17 @@ return {
     vim.api.nvim_set_hl(0, 'RenderMarkdownQuote5', { fg = '#7e9dbc' })
     vim.api.nvim_set_hl(0, 'RenderMarkdownQuote6', { fg = '#7e9dbc' })
     vim.api.nvim_set_hl(0, 'RenderMarkdownInlineHighlight', { bg = '#7e7026', fg = '#d3d8e3' })
+
+    -- 1. Basis-Treesitter-Gruppe (greift bei Standard-Links): Blau und unterstrichen
+    vim.api.nvim_set_hl(0, '@markup.link.label.markdown_inline', { fg = '#81a1c1', underline = true })
+    -- (Optional) Falls die URL selbst auch betroffen sein soll:
+    vim.api.nvim_set_hl(0, '@markup.link.markdown_inline', { fg = '#81a1c1', underline = true })
+    vim.api.nvim_set_hl(0, 'RenderMarkdownLinkTitle', { fg = '#81a1c1', underline = true })
+    -- 2. Wiki-Links: Blau und NICHT unterstrichen
+    -- 'nocombine = true' blockiert das Erben der Unterstreichung aus der Treesitter-Basis
+    vim.api.nvim_set_hl(0, 'my-link', { fg = '#81a1c1', underline = false, nocombine = true })
+    -- Das Icon davor (falls aktiv)
+    vim.api.nvim_set_hl(0, 'RenderMarkdownLink', { fg = '#81a1c1', underline = false })
   end,
   ft = { 'markdown' },
 }
