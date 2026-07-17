@@ -53,7 +53,28 @@ return {
       -- [[ Configure Telescope ]]
       -- See `:help telescope` and `:help telescope.setup()`
       require('telescope').setup {
-        -- You can put your default mappings / updates / etc. in here
+        defaults = {
+          buffer_previewer_maker = function(filepath, bufnr, opts)
+            local default = require('telescope.previewers').buffer_previewer_maker
+            default(filepath, bufnr, opts)
+            if filepath:match('%.md$') then
+              vim.bo[bufnr].filetype = 'markdown'
+              vim.bo[bufnr].textwidth = 80
+              if opts.winid and vim.api.nvim_win_is_valid(opts.winid) then
+                vim.wo[opts.winid].wrap = true
+                vim.wo[opts.winid].linebreak = true
+              end
+              vim.schedule(function()
+                if vim.api.nvim_buf_is_valid(bufnr) then
+                  local ok, manager = pcall(require, 'render-markdown.core.manager')
+                  if ok then
+                    manager.attach(bufnr)
+                  end
+                end
+              end)
+            end
+          end,
+        },
         --  All the info you're looking for is in `:help telescope.setup()`
         --
         -- defaults = {
