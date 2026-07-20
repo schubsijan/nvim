@@ -1,8 +1,52 @@
 return {
   'MeanderingProgrammer/render-markdown.nvim',
   dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
+  -- LaTeX-Rendering benötigt: (1) latex treesitter parser → :TSInstall latex
+  --                          (2) latex2text (von pylatexenc) → pip install pylatexenc
   opts = {
     preset = 'obsidian',
+    on = {
+      render = function(ctx)
+        local ns = vim.api.nvim_create_namespace('rmd-arrows')
+        vim.api.nvim_buf_clear_namespace(ctx.buf, ns, 0, -1)
+        local top = vim.fn.line('w0') - 1
+        local bot = vim.fn.line('w$') - 1
+        local cursor = vim.api.nvim_win_get_cursor(ctx.win)
+        local lines = vim.api.nvim_buf_get_lines(ctx.buf, top, bot + 1, false)
+        local arrows = { { '<->', '↔' }, { '<=>', '⇔' }, { '->', '→' }, { '<-', '←' }, { '=>', '⇒' }, { '<=', '⇐' } }
+        for i, line in ipairs(lines) do
+          local row = top + i - 1
+          if row ~= cursor[1] - 1 then
+            local pos = 1
+            while pos <= #line do
+              local found = false
+              for _, a in ipairs(arrows) do
+                local pat, cchar = a[1], a[2]
+                if #line >= pos + #pat - 1 and line:sub(pos, pos + #pat - 1) == pat then
+                  vim.api.nvim_buf_set_extmark(ctx.buf, ns, row, pos - 1, {
+                    end_row = row, end_col = pos - 1 + #pat,
+                    conceal = '',
+                    virt_text = { { cchar } },
+                    virt_text_pos = 'inline',
+                    priority = 200,
+                  })
+                  pos = pos + #pat
+                  found = true
+                  break
+                end
+              end
+              if not found then
+                pos = pos + 1
+              end
+            end
+          end
+        end
+      end,
+      clear = function(ctx)
+        local ns = vim.api.nvim_create_namespace('rmd-arrows')
+        vim.api.nvim_buf_clear_namespace(ctx.buf, ns, 0, -1)
+      end,
+    },
     anti_conceal = {
       ignore = {
         head_background = true,
