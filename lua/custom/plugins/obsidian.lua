@@ -35,13 +35,17 @@ return {
         local filepath = vim.api.nvim_buf_get_name(buf)
         if not filepath:find(vault_path, 1, true) then return end
         vim.keymap.set('n', 'gd', function()
+          local zotero = require 'custom.scripts.zotero'
+          if zotero.open_in_zotero() then
+            return
+          end
           local word = vim.fn.expand '<cWORD>'
           if word:sub(1, 1) == '#' then
             vim.cmd('Obsidian tags ' .. word:sub(2))
           else
             vim.lsp.buf.definition()
           end
-        end, { buffer = buf, desc = 'Go to definition or tag' })
+        end, { buffer = buf, desc = 'Go to Zotero/definition/tag' })
       end,
     })
 
