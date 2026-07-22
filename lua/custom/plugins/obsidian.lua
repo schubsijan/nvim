@@ -13,7 +13,7 @@ return {
         path = '/home/schubsi/Dokumente/Studium/Masterarbeit/masterarbeit-obsidian',
       },
     },
-    ui = { enable = false }, -- da ich das render-markdown mache
+    ui = { enable = false }, -- da ich das markview mache
     frontmatter = { enabled = false },
     legacy_commands = false,
     footer = {

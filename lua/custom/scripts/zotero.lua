@@ -177,25 +177,19 @@ function M.get_citekey_from_uri(zotero_uri, citation_text)
   return nil
 end
 
-function M.paste_zotero_highlight()
-  local text = vim.fn.getreg('+')
-  if text == '' then
-    vim.notify('System-Clipboard ist leer', vim.log.levels.WARN)
-    return
-  end
+function M.transform_zotero_highlight(text)
+  if not text or text == '' then return nil end
 
   text = text:gsub('“', '"'):gsub('”', '"'):gsub('‘', "'"):gsub('’', "'")
 
   local citation_text, zotero_uri = text:match('%(%[([^%]]+)%]%((zotero://select/[^)]+)%)%)')
   if not citation_text or not zotero_uri then
-    M.insert_at_cursor(text)
-    return
+    return text, 'pattern'
   end
 
   local citekey = M.get_citekey_from_uri(zotero_uri, citation_text)
   if not citekey then
-    M.insert_at_cursor(text)
-    return
+    return text, 'citekey'
   end
 
   local year_start = citation_text:find('%d%d%d%d')
@@ -212,8 +206,59 @@ function M.paste_zotero_highlight()
     pandoc_cite = ('[@%s]'):format(citekey)
   end
 
-  text = text:gsub('%b()', pandoc_cite, 1)
-  M.insert_at_cursor(text)
+  text = text:gsub('%(%[([^%]]+)%]%((zotero://select/[^)]+)%)%)', pandoc_cite, 1)
+  text = text:gsub('%(%[pdf%]%((zotero://open%-pdf/[^)]+)%)%)', '[~>](%1)')
+  return text, 'ok'
+end
+
+function M.paste_zotero_highlight()
+  local text = vim.fn.getreg('+')
+  if text == '' then
+    vim.notify('System-Clipboard ist leer', vim.log.levels.WARN)
+    return
+  end
+  local transformed, reason = M.transform_zotero_highlight(text)
+  if reason == 'pattern' then
+    vim.notify('Kein Zotero-Zitat im Clipboard gefunden', vim.log.levels.WARN)
+  elseif reason == 'citekey' then
+    vim.notify('Zotero-Citekey nicht aufgelöst. Läuft Zotero + Better BibTeX?', vim.log.levels.WARN)
+  end
+  M.insert_at_cursor(transformed)
+end
+
+function M.paste_zotero_highlight_visual()
+  -- yank visual selection into register 'z'
+  local saved = vim.fn.getreg('z')
+  vim.fn.setreg('z', '')
+  pcall(vim.cmd, 'normal! "zy')
+  local text = vim.fn.getreg('z')
+  if text == '' then
+    vim.fn.setreg('z', saved)
+    vim.notify('Leere Auswahl', vim.log.levels.WARN)
+    return
+  end
+
+  local transformed, reason = M.transform_zotero_highlight(text)
+  if reason == 'pattern' then
+    vim.fn.setreg('z', saved)
+    vim.notify('Kein Zotero-Zitat in der Auswahl gefunden', vim.log.levels.WARN)
+    return
+  end
+  if reason == 'citekey' then
+    vim.fn.setreg('z', saved)
+    vim.notify('Zotero-Citekey nicht aufgelöst. Läuft Zotero + Better BibTeX?', vim.log.levels.WARN)
+    return
+  end
+  if not transformed then
+    vim.fn.setreg('z', saved)
+    vim.notify('Unbekannter Fehler bei Transformation', vim.log.levels.ERROR)
+    return
+  end
+
+  -- reselect and replace
+  vim.fn.setreg('z', transformed)
+  pcall(vim.cmd, 'normal! gv"zp')
+  vim.fn.setreg('z', saved)
 end
 
 function M.paste_zotero_text()
@@ -258,20 +303,10 @@ function M.open_item(item)
   end
 end
 
-vim.keymap.set('i', '<C-8>', M.cite, { desc = 'Zotero-Literatur über CAYW einfügen (Pandoc)' })
+vim.keymap.set('i', '<C-u>', M.cite, { desc = 'Zotero-Literatur über CAYW einfügen (Pandoc)' })
 vim.keymap.set('i', '<C-z>', M.paste_zotero_highlight, { desc = 'Zotero-Highlight aus Clipboard einfügen (Pandoc)' })
+vim.keymap.set('v', '<C-z>', M.paste_zotero_highlight_visual,
+  { desc = 'Zotero-Highlight in Auswahl konvertieren (Pandoc)' })
 vim.keymap.set('i', '<C-t>', M.paste_zotero_text, { desc = 'Zotero-Highlight als Nur-Text aus Clipboard einfügen' })
-
-vim.api.nvim_create_autocmd('FileType', {
-  pattern = { 'markdown', 'pandoc', 'rmd' },
-  callback = function(args)
-    vim.keymap.set('n', 'gd', function()
-      if M.open_in_zotero() then
-        return
-      end
-      vim.lsp.buf.definition()
-    end, { buffer = args.buf, desc = 'Gehe zu Zotero-Quelle oder LSP-Definition' })
-  end,
-})
 
 return M

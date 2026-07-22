@@ -24,7 +24,8 @@ return {
                 local pat, cchar = a[1], a[2]
                 if #line >= pos + #pat - 1 and line:sub(pos, pos + #pat - 1) == pat then
                   vim.api.nvim_buf_set_extmark(ctx.buf, ns, row, pos - 1, {
-                    end_row = row, end_col = pos - 1 + #pat,
+                    end_row = row,
+                    end_col = pos - 1 + #pat,
                     conceal = '',
                     virt_text = { { cchar } },
                     virt_text_pos = 'inline',
@@ -136,7 +137,7 @@ return {
       },
       showbreak = {
         default = '',
-        rendered = '  ',
+        rendered = ' ',
       },
       breakindent = {
         default = false,
@@ -182,6 +183,31 @@ return {
     vim.api.nvim_set_hl(0, 'my-link', { fg = '#81a1c1', underline = false, nocombine = true })
     -- Das Icon davor (falls aktiv)
     vim.api.nvim_set_hl(0, 'RenderMarkdownLink', { fg = '#81a1c1', underline = false })
+
+    local orig_definition = vim.lsp.buf.definition
+    function vim.lsp.buf.definition()
+      if vim.tbl_contains({ 'markdown', 'pandoc', 'rmd' }, vim.bo.filetype) then
+        local zotero = require 'custom.scripts.zotero'
+        if zotero.open_in_zotero() then
+          return
+        end
+
+        local line = vim.fn.getline('.')
+        local col = vim.fn.col('.') - 1
+        local pos = 1
+        while pos <= #line do
+          local link_start, link_end, url = line:find('%b[]%(([^)]+)%)', pos)
+          if not link_start then break end
+          if col >= link_start - 1 and col <= link_end - 1 then
+            vim.fn.system({ 'xdg-open', url })
+            return
+          end
+          pos = link_end + 1
+        end
+      end
+
+      orig_definition()
+    end
   end,
   ft = { 'markdown' },
 }
