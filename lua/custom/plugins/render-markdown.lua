@@ -152,37 +152,89 @@ return {
   config = function(_, opts)
     local render = require 'render-markdown'
     render.setup(opts)
-    local colors = {
-      { 'H1', '#bf616a' }, { 'H2', '#a3be8c' },
-      { 'H3', '#ebcb8b' }, { 'H4', '#81a1c1' },
-      { 'H5', '#b48ead' }, { 'H6', '#b48ead' },
-    }
-    for _, c in ipairs(colors) do
-      local name, fg = c[1], c[2]
-      vim.api.nvim_set_hl(0, 'RenderMarkdown' .. name, { fg = fg })
-      vim.api.nvim_set_hl(0, 'RenderMarkdown' .. name .. 'Bg', { fg = fg, bg = '#3b4252' })
+    local function hl(name)
+      return vim.api.nvim_get_hl(0, { name = name })
     end
-    vim.api.nvim_set_hl(0, '@markup.italic', { fg = '#e5c688', italic = true })
-    vim.api.nvim_set_hl(0, 'RenderMarkdownBullet', { fg = '#888e99' })
-    -- Blockquotes
-    vim.api.nvim_set_hl(0, 'RenderMarkdownQuote1', { fg = '#7e9dbc' })
-    vim.api.nvim_set_hl(0, 'RenderMarkdownQuote2', { fg = '#7e9dbc' })
-    vim.api.nvim_set_hl(0, 'RenderMarkdownQuote3', { fg = '#7e9dbc' })
-    vim.api.nvim_set_hl(0, 'RenderMarkdownQuote4', { fg = '#7e9dbc' })
-    vim.api.nvim_set_hl(0, 'RenderMarkdownQuote5', { fg = '#7e9dbc' })
-    vim.api.nvim_set_hl(0, 'RenderMarkdownQuote6', { fg = '#7e9dbc' })
-    vim.api.nvim_set_hl(0, 'RenderMarkdownInlineHighlight', { bg = '#7e7026', fg = '#d3d8e3' })
 
-    -- 1. Basis-Treesitter-Gruppe (greift bei Standard-Links): Blau und unterstrichen
-    vim.api.nvim_set_hl(0, '@markup.link.label.markdown_inline', { fg = '#81a1c1', underline = true })
-    -- (Optional) Falls die URL selbst auch betroffen sein soll:
-    vim.api.nvim_set_hl(0, '@markup.link.markdown_inline', { fg = '#81a1c1', underline = true })
-    vim.api.nvim_set_hl(0, 'RenderMarkdownLinkTitle', { fg = '#81a1c1', underline = true })
-    -- 2. Wiki-Links: Blau und NICHT unterstrichen
-    -- 'nocombine = true' blockiert das Erben der Unterstreichung aus der Treesitter-Basis
-    vim.api.nvim_set_hl(0, 'my-link', { fg = '#81a1c1', underline = false, nocombine = true })
-    -- Das Icon davor (falls aktiv)
-    vim.api.nvim_set_hl(0, 'RenderMarkdownLink', { fg = '#81a1c1', underline = false })
+    local function pick(groups, attr)
+      for _, name in ipairs(groups) do
+        local h = hl(name)
+        if h[attr] then
+          return h[attr]
+        end
+      end
+      return nil
+    end
+
+    local function setup_highlights()
+      local normal_bg = hl('Normal').bg
+
+      local heading_sources = {
+        H1 = { '@markup.heading.1.markdown', 'Title' },
+        H2 = { '@markup.heading.2.markdown', 'Identifier' },
+        H3 = { '@markup.heading.3.markdown', 'Special' },
+        H4 = { '@markup.heading.4.markdown', 'Statement' },
+        H5 = { '@markup.heading.5.markdown', '@markup.heading', 'NonText' },
+        H6 = { '@markup.heading.6.markdown', '@markup.heading', 'Comment' },
+      }
+      for level, sources in pairs(heading_sources) do
+        local fg = pick(sources, 'fg')
+        if fg then
+          vim.api.nvim_set_hl(0, 'RenderMarkdown' .. level, { fg = fg })
+          vim.api.nvim_set_hl(0, 'RenderMarkdown' .. level .. 'Bg', { fg = fg, bg = normal_bg })
+        end
+      end
+
+      local italic_fg = pick({ '@markup.italic', 'Type' }, 'fg')
+      if italic_fg then
+        vim.api.nvim_set_hl(0, '@markup.italic', { fg = italic_fg, italic = true })
+      end
+
+      local bullet_fg = pick({ 'NonText', 'Comment' }, 'fg')
+      if bullet_fg then
+        vim.api.nvim_set_hl(0, 'RenderMarkdownBullet', { fg = bullet_fg })
+      end
+
+      local quote_fg = pick({ '@markup.quote', 'String', 'Comment' }, 'fg')
+      if quote_fg then
+        for i = 1, 6 do
+          vim.api.nvim_set_hl(0, 'RenderMarkdownQuote' .. i, { fg = quote_fg })
+        end
+      end
+
+      vim.api.nvim_set_hl(0, 'RenderMarkdownInlineHighlight', {
+        bg = pick({ 'Visual', 'CursorLine' }, 'bg') or normal_bg,
+        fg = pick({ 'Visual', 'Normal' }, 'fg'),
+      })
+
+      local link_fg = pick({ '@markup.link', '@markup.link.markdown', '@string.special.url', 'Identifier' }, 'fg')
+      if link_fg then
+        vim.api.nvim_set_hl(0, '@markup.link.label.markdown_inline', { fg = link_fg, underline = true })
+        vim.api.nvim_set_hl(0, '@markup.link.markdown_inline', { fg = link_fg, underline = true })
+        vim.api.nvim_set_hl(0, 'RenderMarkdownLinkTitle', { fg = link_fg, underline = true })
+        vim.api.nvim_set_hl(0, 'my-link', { fg = link_fg, underline = false, nocombine = true })
+        vim.api.nvim_set_hl(0, 'RenderMarkdownLink', { fg = link_fg, underline = false })
+      end
+    end
+
+    setup_highlights()
+    vim.api.nvim_create_autocmd('ColorScheme', {
+      pattern = '*',
+      callback = function()
+        vim.schedule(setup_highlights)
+      end,
+      desc = 'render-markdown: Highlights ans Colorscheme anpassen',
+    })
+
+    vim.api.nvim_create_autocmd('FileType', {
+      pattern = 'markdown',
+      callback = function()
+        vim.bo.formatoptions = vim.bo.formatoptions .. 'r'
+        vim.bo.comments = 'b:-,b:*,b:+,b:1.,b:1)'
+        vim.bo.autoindent = true
+      end,
+      desc = 'markdown: Bullet-Listen auf Enter fortsetzen',
+    })
 
     local orig_definition = vim.lsp.buf.definition
     function vim.lsp.buf.definition()
