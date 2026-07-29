@@ -2,6 +2,7 @@ return {
   'MeanderingProgrammer/render-markdown.nvim',
   dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
   -- LaTeX-Rendering benötigt: (1) latex treesitter parser → :TSInstall latex
+  -- LaTeX-Rendering benötigt: (1) latex treesitter parser → :TSInstall latex
   --                          (2) latex2text (von pylatexenc) → pip install pylatexenc
   opts = {
     preset = 'obsidian',
@@ -41,6 +42,61 @@ return {
               end
             end
           end
+          -- Show emphasis markers on cursor line (override treesitter conceal)
+          if row == cursor[1] - 1 then
+            local mpos = 1
+            while mpos <= #line do
+              local s, e = line:find('[*_]+', mpos)
+              if not s then break end
+              vim.api.nvim_buf_set_extmark(ctx.buf, ns, row, s - 1, {
+                end_row = row, end_col = e,
+                conceal = '',
+                virt_text = { { line:sub(s, e) } },
+                virt_text_pos = 'inline',
+                priority = 200,
+              })
+              mpos = e + 1
+            end
+          end
+          local link_pos = 1
+          while link_pos do
+            local s, e, link_text = line:find('%[([^%]]*)%]%(([^)]*)%)', link_pos)
+            if s then
+              local link_start_0 = s - 1
+              local link_end_0 = e
+              local on_link = row == cursor[1] - 1 and cursor[2] >= link_start_0 and cursor[2] < link_end_0
+              if not on_link and e > s then
+                -- hide `[`
+                vim.api.nvim_buf_set_extmark(ctx.buf, ns, row, s - 1, {
+                    end_row = row, end_col = s,
+                    conceal = '',
+                    virt_text = { { '' } },
+                    virt_text_pos = 'inline',
+                    priority = 10000,
+                })
+                -- hide `]`
+                vim.api.nvim_buf_set_extmark(ctx.buf, ns, row, s + #link_text, {
+                    end_row = row, end_col = s + #link_text + 1,
+                    conceal = '',
+                    virt_text = { { '' } },
+                    virt_text_pos = 'inline',
+                    priority = 10000,
+                })
+                -- hide `(url)`
+                vim.api.nvim_buf_set_extmark(ctx.buf, ns, row, s + #link_text + 1, {
+                  end_row = row,
+                  end_col = e,
+                  conceal = '',
+                  virt_text = { { '' } },
+                  virt_text_pos = 'inline',
+                  priority = 10000,
+                })
+              end
+              link_pos = e + 1
+            else
+              link_pos = nil
+            end
+          end
         end
       end,
       clear = function(ctx)
@@ -51,7 +107,6 @@ return {
     anti_conceal = {
       ignore = {
         head_background = true,
-        head_icon = true,
         head_border = true,
         code_background = true,
         indent = true,
@@ -127,6 +182,9 @@ return {
     pipe_table = { preset = 'round' },
     quote = { repeat_linebreak = true },
     win_options = {
+      concealcursor = {
+        rendered = 'nc',
+      },
       wrap = {
         default = vim.o.wrap,
         rendered = true,
@@ -137,7 +195,7 @@ return {
       },
       showbreak = {
         default = '',
-        rendered = ' ',
+        rendered = '  ',
       },
       breakindent = {
         default = false,
@@ -218,6 +276,129 @@ return {
     end
 
     setup_highlights()
+
+    vim.treesitter.query.set('markdown_inline', 'highlights', [[
+(code_span) @markup.raw @nospell
+
+(emphasis) @markup.italic
+
+(strong_emphasis) @markup.strong
+
+(strikethrough) @markup.strikethrough
+
+(shortcut_link
+  (link_text) @nospell)
+
+[
+  (backslash_escape)
+  (hard_line_break)
+] @string.escape
+
+; Conceal codeblock and text style markers
+([
+  (code_span_delimiter)
+  (emphasis_delimiter)
+] @conceal
+  (#set! conceal ""))
+
+; Inline links handled by on.render
+(inline_link
+  [
+    "["
+    "]"
+    "("
+    (link_destination)
+    ")"
+  ] @markup.link)
+
+[
+  (link_label)
+  (link_text)
+  (link_title)
+  (image_description)
+] @markup.link.label
+
+((inline_link
+  (link_destination) @_url) @_label
+  (#set! @_label url @_url))
+
+((image
+  (link_destination) @_url) @_label
+  (#set! @_label url @_url))
+
+; Conceal image links
+(image
+  [
+    "!"
+    "["
+    "]"
+    "("
+    (link_destination)
+    ")"
+  ] @markup.link
+  (#set! conceal ""))
+
+; Conceal full reference links
+(full_reference_link
+  [
+    "["
+    "]"
+    (link_label)
+  ] @markup.link
+  (#set! conceal ""))
+
+; Conceal collapsed reference links
+(collapsed_reference_link
+  [
+    "["
+    "]"
+  ] @markup.link
+  (#set! conceal ""))
+
+; Conceal shortcut links - handled by on.render
+(shortcut_link
+  [
+    "["
+    "]"
+  ] @markup.link)
+
+[
+  (link_destination)
+  (uri_autolink)
+  (email_autolink)
+] @markup.link.url @nospell
+
+((uri_autolink) @_url
+  (#offset! @_url 0 1 0 -1)
+  (#set! @_url url @_url))
+
+(entity_reference) @nospell
+
+((entity_reference) @character.special
+  (#eq? @character.special "&nbsp;")
+  (#set! conceal " "))
+
+((entity_reference) @character.special
+  (#eq? @character.special "&lt;")
+  (#set! conceal "<"))
+
+((entity_reference) @character.special
+  (#eq? @character.special "&gt;")
+  (#set! conceal ">"))
+
+((entity_reference) @character.special
+  (#eq? @character.special "&amp;")
+  (#set! conceal "&"))
+
+((entity_reference) @character.special
+  (#eq? @character.special "&quot;")
+  (#set! conceal "\""))
+
+((entity_reference) @character.special
+  (#any-of? @character.special "&ensp;" "&emsp;")
+  (#set! conceal " "))
+]])
+
     vim.api.nvim_create_autocmd('ColorScheme', {
       pattern = '*',
       callback = function()
