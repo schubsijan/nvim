@@ -42,8 +42,8 @@ return {
               end
             end
           end
-          -- Show emphasis markers on cursor line (override treesitter conceal)
-          if row == cursor[1] - 1 then
+          -- Hide emphasis markers on non-cursor lines
+          if row ~= cursor[1] - 1 then
             local mpos = 1
             while mpos <= #line do
               local s, e = line:find('[*_]+', mpos)
@@ -51,7 +51,7 @@ return {
               vim.api.nvim_buf_set_extmark(ctx.buf, ns, row, s - 1, {
                 end_row = row, end_col = e,
                 conceal = '',
-                virt_text = { { line:sub(s, e) } },
+                virt_text = { { '' } },
                 virt_text_pos = 'inline',
                 priority = 200,
               })
@@ -297,7 +297,6 @@ return {
 ; Conceal codeblock and text style markers
 ([
   (code_span_delimiter)
-  (emphasis_delimiter)
 ] @conceal
   (#set! conceal ""))
 
