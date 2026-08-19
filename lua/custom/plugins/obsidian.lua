@@ -10,7 +10,7 @@ return {
     workspaces = {
       {
         name = 'masterarbeit',
-        path = '/home/schubsi/Dokumente/Studium/Masterarbeit/masterarbeit-obsidian',
+        path = '/home/schubsi/Documents/Studium/Masterarbeit/masterarbeit-obsidian',
       },
     },
     ui = { enable = false }, -- da ich das markview mache

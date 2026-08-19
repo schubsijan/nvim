@@ -128,7 +128,29 @@ return {
   },
   {
     "rgarofano/omarchy-theme.nvim",
+    dependencies = {
+      {
+        "bjarneo/aether.nvim",
+        branch = "v3",
+        name = "aether",
+        lazy = true,
+      },
+    },
     config = function()
+      local ok, theme_plugins = pcall(dofile, vim.fn.expand("~/.config/omarchy/current/theme/neovim.lua"))
+      if ok and theme_plugins then
+        for _, plugin in ipairs(theme_plugins) do
+          if type(plugin) == "table" and plugin.name == "aether" then
+            if plugin.opts then
+              require("aether").setup(plugin.opts)
+            end
+            if plugin.config then
+              plugin.config(nil, plugin.opts or {})
+            end
+            break
+          end
+        end
+      end
       require("omarchy-theme").setup()
     end,
   },
