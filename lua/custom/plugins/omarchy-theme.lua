@@ -152,6 +152,8 @@ return {
         end
       end
       require("omarchy-theme").setup()
+      vim.api.nvim_set_hl(0, "MiniStatuslineFilename", { fg = "#253631", bg = "#ebebbd" })
+      vim.api.nvim_set_hl(0, "MsgArea", { bg = "#ebebbd" })
     end,
   },
 }
