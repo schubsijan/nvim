@@ -148,7 +148,8 @@ return {
           'html',
           'tailwindcss',
           'eslint',
-          'templ'
+          'templ',
+          'svelte',
         },
         handlers = {
           -- this first function is the "default handler"
@@ -233,7 +234,27 @@ return {
             })
           end,
           tsserver = function()
-            require('lspconfig').tsserver.setup({})
+            require('lspconfig').ts_ls.setup({
+              settings = {
+                typescript = {
+                  tsserver = {
+                    globalPlugins = {
+                      {
+                        name = 'typescript-svelte-plugin',
+                        location = vim.fn.stdpath('data')
+                          .. '/mason/packages/svelte-language-server/node_modules/typescript-svelte-plugin',
+                        enableForWorkspaceTypeScriptVersions = true,
+                      },
+                    },
+                  },
+                },
+              },
+            })
+          end,
+          svelte = function()
+            require('lspconfig').svelte.setup({
+              root_dir = require('lspconfig').util.root_pattern('svelte.config.js', 'package.json', '.git'),
+            })
           end,
         }
       })

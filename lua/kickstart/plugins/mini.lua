@@ -31,6 +31,17 @@ return {
         },
       }
 
+      local function apply_aether_statusline()
+        if vim.g.colors_name == 'aether' then
+          vim.api.nvim_set_hl(0, 'MiniStatuslineFilename', { bg = '#ecebbd' })
+        end
+      end
+
+      vim.api.nvim_create_autocmd('ColorScheme', {
+        callback = apply_aether_statusline,
+      })
+      apply_aether_statusline()
+
       -- 1. MODE: "N", "I", "V" mit korrekter Farbe
       ---@diagnostic disable-next-line: duplicate-set-field
       statusline.section_mode = function(args)
